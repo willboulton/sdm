@@ -3556,7 +3556,16 @@ bool Filters::checkYellowAndGreen(shared_ptr<DNA> d, int pairPre,
 	int tagIdx2(-2);
 	unsigned int hindrance = 0;
 	int pair = max(0, pairPre);//corrects for -1 (undefined pair_) to set to 0
-	
+
+	// We trim for poly-G / homonucleotide tail here, before filtering for length, and before trimming adapter sequences etc. 
+	if (trimHomonucleotide != 0){
+		unsigned int homoNTnewlength = d->HomoNTTrim(trimHomonucleotide);
+		if (homoNTnewlength > 0) {
+			d->cutSeqPseudo(homoNTnewlength);
+			d->QualCtrl.HomoNTtrimmed = true;
+		}
+	}
+
 	//remove technical adapter
 	if (pairPre == -1 && removeAdapter) {
 		remove_adapter(d);
@@ -3635,14 +3644,7 @@ bool Filters::checkYellowAndGreen(shared_ptr<DNA> d, int pairPre,
 	if (TruncSeq>0){
 		d->cutSeqPseudo(TruncSeq);
 	}
-	// We trim for poly-G / homonucleotide tail here, before filtering for length
-	if (trimHomonucleotide != 0){
-		unsigned int homoNTnewlength = d->HomoNTTrim(trimHomonucleotide);
-		if (homoNTnewlength > 0) {
-			d->cutSeqPseudo(homoNTnewlength);
-			d->QualCtrl.HomoNTtrimmed = true;
-		}
-	}
+
 	if (check_lengthXtra(d)) {
 		d->failed(); return false;
 	}
